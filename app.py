@@ -1,5 +1,5 @@
 import streamlit as st
-from forex_python.converter import CurrencyRates
+import requests
 
 # إعداد واجهة الموقع
 st.set_page_config(page_title="Global Currency Converter", layout="centered")
@@ -50,7 +50,7 @@ currencies = {
     "🇹🇭 THB - البات التايلاندي": "THB",
     "🇻🇳 VND - الدونج الفيتنامي": "VND",
     "🇵🇰 PKR - الروبية الباكستانية": "PKR",
-    "🇱🇰 LKR - الروبية السريلانكية": "LKR",
+    "🇱KR LKR - الروبية السريلانكية": "LKR",
     "🇰🇿 KZT - التينغ الكازاخستاني": "KZT",
     "🇰🇪 KES - الشلن الكيني": "KES",
     "🇳🇬 NGN - النيرا النيجيري": "NGN",
@@ -64,12 +64,10 @@ currencies = {
 # تصميم الحقول
 amount = st.number_input("أدخل المبلغ:", value=1.0, min_value=0.0)
 
-# استخدام قوائم مفاتيح القاموس للعرض
 from_curr = st.selectbox("من:", list(currencies.keys()))
 to_curr = st.selectbox("إلى:", list(currencies.keys()))
 
 if st.button("تحويل الآن"):
-    # استخراج الرمز البرمجي للعملة (مثل USD)
     from_code = currencies[from_curr]
     to_code = currencies[to_curr]
     
@@ -77,8 +75,14 @@ if st.button("تحويل الآن"):
         st.warning("يرجى اختيار عملتين مختلفتين للتحويل.")
     else:
         try:
-            c = CurrencyRates()
-            result = c.convert(from_code, to_code, amount)
+            # جلب أسعار العملات باستخدام API موثوق ومجاني
+            url = f"https://api.exchangerate-api.com/v4/latest/{from_code}"
+            response = requests.get(url)
+            data = response.json()
+            
+            rate = data['rates'][to_code]
+            result = amount * rate
+            
             st.success(f"✅ {amount} {from_code} = {result:.2f} {to_code}")
         except Exception as e:
-            st.error("حدث خطأ أثناء الاتصال بخادم أسعار العملات، يرجى التحقق من اتصالك بالإنترنت.")
+            st.error("حدث خطأ أثناء جلب سعر التحويل، تأكد من اتصالك بالإنترنت أو جرب عملة أخرى.")
